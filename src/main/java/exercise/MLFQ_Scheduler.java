@@ -15,6 +15,7 @@ public class MLFQ_Scheduler extends AScheduler {
         // initialize queues
         //TODO
         this.queues = new ArrayList<>(quantums.length);
+        //for all quantums initialize a new Queue as a LinkedList
         for (int i = 0; i < quantums.length; i++) {
             this.queues.add(new LinkedList<>());
         }
@@ -33,21 +34,27 @@ public class MLFQ_Scheduler extends AScheduler {
     @Override
     public void schedule(ComputerSystem c) {
         if (c.getCurrentP() != null) {
+            //add process in case it has a CPU burst longer than the quantum for its Prio
             if (c.getCurrentP().getState() == Process.pstate.READY) {
                 c.getCurrentP().setPrio(Math.min(this.quantums.length, c.getCurrentP().getPrio() + 1));
                 addProcess(c.getCurrentP());
             }
+            //in case the Process has a IO work to do it gets added back in the same Priority
             else if (c.getCurrentP().getState() == Process.pstate.BLOCKED) {
                 c.getCurrentP().setState(Process.pstate.READY);
                 addProcess(c.getCurrentP());
             }
+            //in case the process is terminated it gets yeeted and deleted
             else if (c.getCurrentP().getState() == Process.pstate.TERMINATED){
                 c.setCurrentP(null);
+                //this is just for debug so i can see how much prcesses r in the Scheduler right now
                 System.out.println(queues.stream().mapToInt(LinkedList::size).sum());
             }
         }
+        //get next process
         Process p = retrieveNextP();
         if (p != null) {
+            //adds the next process to the System and schedule the Clock
             c.setCurrentP(p);
             c.scheduleClockInt(this.quantums[p.getPrio()]);
         }
